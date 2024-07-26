@@ -14,7 +14,8 @@ window.addEventListener('load', function(){
                     && !this.game.keys.includes(e.key)) {
                         this.game.keys.push(e.key) //save key to game.keys [] in class Game
                 }
-                else if(e.key === ' ') this.game.player.shootTop() // set key to shooting bullet
+                else if(e.key === ' ') this.game.player.shootTop(); // set key to shooting bullet
+                else if(e.key === 'b') this.game.debug = !this.game.debug; // swith debug mode
             })
             // window.addEventListener('keyup', e => this.game.keys.splice(e.key)) // remove key to game.key[] if key up
             window.addEventListener('keyup', e => {
@@ -75,8 +76,7 @@ window.addEventListener('load', function(){
             this.projectiles = this.projectiles.filter(projectile => !projectile.makedForDeletion)
         }
         draw(context){
-            context.fillStyle = 'black';
-            context.fillRect(this.x, this.y, this.width, this.height);
+            if(this.game.debug) context.strokeRect(this.x, this.y, this.width, this.height);
             context.drawImage(this.image, this.frameX * this.width, this.frameY * this.height, this.width, this.height, this.x, this.y, this.width, this.height);
             this.projectiles.forEach(projectile => projectile.draw(context)) // draw each buller on array
         }
@@ -198,7 +198,6 @@ window.addEventListener('load', function(){
                     context.fillText(message1, this.game.width*0.5, this.game.height*0.5-40);
                     this.fontSize = 25;
                     context.fillText(message2, this.game.width*0.5, this.game.height*0.5+40);
-                    console.log(context)
                 }
             context.restore();
         }
@@ -225,6 +224,7 @@ window.addEventListener('load', function(){
             this.gameTime = 0;
             this.timeLimit = 5000;
             this.speed = 1;
+            this.debug = false;
         }
         // update obj with deltaTime
         update(deltaTime){

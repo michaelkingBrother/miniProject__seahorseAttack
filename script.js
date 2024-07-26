@@ -110,8 +110,48 @@ window.addEventListener('load', function(){
             this.y = Math.random() * (this.game.height * 0.9 - this.height);
         }
     }
-    class Layer {}
-    class Background {}
+    // handle logic for render layer on game
+    class Layer {
+        constructor(game, image, speedModifier){
+            this.game = game;
+            this.image = image;
+            this.speedModifier = speedModifier;
+            this.width = 1768;
+            this.height = 500;
+            this.x = 0;
+            this.y = 0;
+        };
+        update(){
+            if (this.x <= -this.width) this.x = 0; // if img move out left screen => reset x position
+            this.x -= this.game.speed * this.speedModifier; // move speed depends game speed and speedModifier (its speed) to create paralax and easy control
+        };
+        draw(context){
+            context.drawImage(this.image, this.x, this.y);
+            context.drawImage(this.image, this.x + this.width, this.y); // joint two layers together to create a seemless feel smooth
+        };
+    }
+    // handle draw Background layer
+    class Background {
+        constructor(game){
+            this.game = game;
+            this.image1 = document.getElementById('layer1');
+            this.image2 = document.getElementById('layer2');
+            this.image3 = document.getElementById('layer3');
+            this.image4 = document.getElementById('layer4');
+            this.layer1 = new Layer(game, this.image1, 0.2); // init Layer Objet for draw Background
+            this.layer2 = new Layer(game, this.image2, 0.4);
+            this.layer3 = new Layer(game, this.image3, 1);
+            this.layer4 = new Layer(game, this.image4, 1.5);
+
+            this.layers = [this.layer1, this.layer2, this.layer3]; // draw multilayer on layers []
+        };
+        update(){
+            this.layers.forEach(layer => layer.update());
+        };
+        draw(context){
+            this.layers.forEach(layer => layer.draw(context));
+        };
+    }
     class UI {
         constructor(game){
             this.game = game;
@@ -160,6 +200,7 @@ window.addEventListener('load', function(){
         constructor(width, height){
             this.width = width;
             this.height = height;
+            this.background = new Background(this);
             this.player = new Player(this);
             this.input = new InputHandler(this);
             this.ui = new UI(this);
@@ -176,9 +217,15 @@ window.addEventListener('load', function(){
             this.winningScore = 10;
             this.gameTime = 0;
             this.timeLimit = 5000;
+            this.speed = 1;
         }
         // update obj with deltaTime
         update(deltaTime){
+            // update game timmer
+            if(!this.gameOver) this.gameTime += deltaTime;
+            if(this.gameTime > this.timeLimit) this.gameOver = true;
+            this.background.update();
+            this.background.layer4.update();
             this.player.update();
             // update ammo with deltaTime
             if(this.ammoTimer > this.ammoInterval) {
@@ -186,13 +233,6 @@ window.addEventListener('load', function(){
             } else {
                 this.ammoTimer += deltaTime;
             };
-            // update game timmer
-            if(this.gameTime > this.timeLimit) this.gameOver = true;
-            if(this.gameTime < this.timeLimit){
-                this.gameTime += deltaTime;
-            } else {
-                this.gameOver = true;
-            }
             // update enemy with deltaTime
             if(this.enemyTimer > this.enemyInterval && !this.gameOver) {
                 this.addEnemy();
@@ -225,10 +265,11 @@ window.addEventListener('load', function(){
 
         }
         draw(context){
+            this.background.draw(context);
             this.player.draw(context);
             this.ui.draw(context);
-            // draw enemies;
-            this.enemies.forEach(enemy => enemy.draw(context))
+            this.enemies.forEach(enemy => enemy.draw(context)); // draw each enemy
+            this.background.layer4.draw(context); // draw layer 4 outermost
         }
         // push enemy to enemies []
         addEnemy(){

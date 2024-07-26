@@ -47,14 +47,18 @@ window.addEventListener('load', function(){
     class Player {
         constructor(game){
             this.game = game;
-            this.width = 129;
+            this.width = 120;
             this.height = 190;
             this.x = 20;
             this.y = 100;
+            this.frameX = 0;
+            this.frameY = 0;
+            this.maxFrameX = 37;
             this.speedX = 0;
             this.speedY = 0;
             this.maxSpeed = 2;
             this.projectiles = [];
+            this.image = document.getElementById('player');
         }
         update(){
             if (this.game.keys.includes('ArrowUp')) this.speedY = -this.maxSpeed;
@@ -64,13 +68,16 @@ window.addEventListener('load', function(){
             else {this.speedX = 0; this.speedY = 0}
             this.x += this.speedX;
             this.y += this.speedY;
-            // ht - handle projectiles
+            // hande player render
+            (this.frameX < this.maxFrameX) ? this.frameX++ : this.frameX = 0;
+            // handle projectiles
             this.projectiles.forEach(projectile => projectile.update()) // call update() on each bullet
             this.projectiles = this.projectiles.filter(projectile => !projectile.makedForDeletion)
         }
         draw(context){
             context.fillStyle = 'black';
             context.fillRect(this.x, this.y, this.width, this.height);
+            context.drawImage(this.image, this.frameX * this.width, this.frameY * this.height, this.width, this.height, this.x, this.y, this.width, this.height);
             this.projectiles.forEach(projectile => projectile.draw(context)) // draw each buller on array
         }
         // player shoot bullet

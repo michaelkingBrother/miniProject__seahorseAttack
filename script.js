@@ -3,7 +3,7 @@ window.addEventListener('load', function(){
     const canvas = document.getElementById('canvas1');
     const ctx = canvas.getContext('2d'); //or webgl for 3d
 
-    canvas.width = 1500;
+    canvas.width = 700;
     canvas.height = 500;
 
     class InputHandler {
@@ -96,25 +96,35 @@ window.addEventListener('load', function(){
             this.makedForDeletion = false;
             this.lives = 5;
             this.score = this.lives;
+            this.frameX = 0;
+            this.frameY=0;
+            this.maxFrameX = 37;
         }
         update(){
-            this.x += this.speedX;
+            this.x += this.speedX - this.game.speed; // add game speed for control
             if (this.x + this.width < 0) this.makedForDeletion = true;
+            // enemy animation
+            (this.frameX < this.maxFrameX) ? this.frameX++ : this.frameX = 0;
         }
         draw(context){
-            context.fillStyle = 'red';
-            context.fillRect(this.x, this.y, this.width, this.height);
-            context.fillStyle = 'black';
-            context.font = '20px Helvetica';
-            context.fillText(this.lives, this.x, this.y);
+            // debug mode
+            if(this.game.debug) {
+                context.strokeRect(this.x, this.y, this.width, this.height);
+                context.fillStyle = 'black';
+                context.font = '20px Helvetica';
+                context.fillText(this.lives, this.x, this.y);
+            };
+            context.drawImage(this.image, this.frameX * this.width, this.frameY * this.height, this.width, this.height, this.x, this.y, this.width, this.height)
         }
     }
     class Angular1 extends Enemy {
         constructor(game) {
             super(game);
-            this.width = 228 * 0.2;
-            this.height = 169 * 0.2;
+            this.width = 228;
+            this.height = 169;
             this.y = Math.random() * (this.game.height * 0.9 - this.height);
+            this.image = document.getElementById('angler1');
+            this.frameY = Math.floor(Math.random() * 3); // casuse sprite sheet have 3 row
         }
     }
     // handle logic for render layer on game

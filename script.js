@@ -35,7 +35,7 @@ window.addEventListener('load', function(){
         }
         update(){
             this.x += this.speed; //add speed for bullet
-            if (this.x > this.game.width * 0.8 ) this.makedForDeletion = true // set a flag to remove bullet if over 80% screen
+            if (this.x > this.game.width ) this.makedForDeletion = true // set a flag to remove bullet if over 80% screen
         }
         draw(context){
             context.fillStyle = 'yellow';
@@ -60,8 +60,11 @@ window.addEventListener('load', function(){
             this.maxSpeed = 2;
             this.projectiles = [];
             this.image = document.getElementById('player');
+            this.powerUp = false; // swith to powerup stage
+            this.powerUpTimer = 0;
+            this.powerUpLimit = 10000;
         }
-        update(){
+        update(deltaTime){
             if (this.game.keys.includes('ArrowUp')) this.speedY = -this.maxSpeed;
             else if (this.game.keys.includes('ArrowDown')) this.speedY = this.maxSpeed;
             else if (this.game.keys.includes('ArrowLeft')) this.speedX = -this.maxSpeed;
@@ -74,18 +77,41 @@ window.addEventListener('load', function(){
             // handle projectiles
             this.projectiles.forEach(projectile => projectile.update()) // call update() on each bullet
             this.projectiles = this.projectiles.filter(projectile => !projectile.makedForDeletion)
+            //power Up
+            if(this.powerUp){
+                if(this.powerUpTimer > this.powerUpLimit) {
+                    this.powerUp = false;
+                    this.powerUpTimer = 0;
+                    this.frameY = 0;
+                } else {
+                    this.powerUpTimer += deltaTime;
+                    this.frameY = 1;
+                    this.game.ammo += 0.1; // fast ammo return
+                }
+            }
         }
         draw(context){
             if(this.game.debug) context.strokeRect(this.x, this.y, this.width, this.height);
-            context.drawImage(this.image, this.frameX * this.width, this.frameY * this.height, this.width, this.height, this.x, this.y, this.width, this.height);
             this.projectiles.forEach(projectile => projectile.draw(context)) // draw each buller on array
+            context.drawImage(this.image, this.frameX * this.width, this.frameY * this.height, this.width, this.height, this.x, this.y, this.width, this.height);
         }
         // player shoot bullet
         shootTop(){
             if(this.game.ammo > 0) {
                 this.projectiles.push(new Projectile(this.game, this.x + 80, this.y + 30))
                 this.game.ammo--
+            };
+            if(this.powerUp) this.shootBottom();
+        }
+        shootBottom(){
+            if(this.game.ammo > 0) {
+                this.projectiles.push(new Projectile(this.game, this.x + 80, this.y + 175))
             }
+        }
+        enterPowerUp(){
+            this.powerUpTimer= 0; // reset timer if collision second enemy
+            this.powerUp = true;
+            this.game.ammo = this.game.maxAmmo // reset full ammo;
         }
     }
     class Enemy {
@@ -213,10 +239,6 @@ window.addEventListener('load', function(){
                 context.fillStyle= this.color;
                 // draw core
                 context.fillText("Score: " + this.game.score, 20, 40);
-                // draw ammo
-                for (let i = 0; i < this.game.ammo; i++) {
-                    context.fillRect(20 + 5*i, 50, 4, 20);
-                };
                 // game timer
                 context.fillText ('Timer: '+ (this.game.gameTime*0.001).toFixed(1), 20, 100);
                 // game over message
@@ -235,7 +257,12 @@ window.addEventListener('load', function(){
                     context.fillText(message1, this.game.width*0.5, this.game.height*0.5-40);
                     context.font = '25px Helvetica';
                     context.fillText(message2, this.game.width*0.5, this.game.height*0.5+40);
-                }
+                };
+                // draw ammo
+                if(this.game.player.powerUp) context.fillStyle = "yellow" ;
+                for (let i = 0; i < this.game.ammo; i++) {
+                    context.fillRect(20 + 5*i, 50, 4, 20);
+                };
             context.restore();
         }
     }
@@ -270,7 +297,7 @@ window.addEventListener('load', function(){
             if(this.gameTime > this.timeLimit) this.gameOver = true;
             this.background.update();
             this.background.layer4.update();
-            this.player.update();
+            this.player.update(deltaTime); // update player for power up time
             // update ammo with deltaTime
             if(this.ammoTimer > this.ammoInterval) {
                 if(this.ammo < this.maxAmmo) this.ammo++ ; this.ammoTimer = 0;
@@ -287,8 +314,11 @@ window.addEventListener('load', function(){
             this.enemies.forEach(
                 enemy => {
                     enemy.update();
+                    // checke collision of player and enemy
                     if(this.checkCollision(this.player, enemy)){
                         enemy.makedForDeletion = true;
+                        // check type of enemy
+                        enemy.type == 'lucky' ? this.player.enterPowerUp() : this.score -= enemy.score;
                     };
                     this.player.projectiles.forEach(
                         projectile => {
@@ -312,17 +342,16 @@ window.addEventListener('load', function(){
             context.font = '20px Helvetica';
             this.background.draw(context);
             this.player.draw(context);
-            this.ui.draw(context);
             this.enemies.forEach(enemy => enemy.draw(context)); // draw each enemy
             this.background.layer4.draw(context); // draw layer 4 outermost
+            this.ui.draw(context);
         }
         // push enemy to enemies []
         addEnemy(){
             const randomize = Math.random();
-            if(randomize < 0.3) this.enemies.push(new Angular1(this));
-            else if(randomize < 0.6) this.enemies.push(new Angular2(this));
+            if(randomize < 0.5) this.enemies.push(new Angular1(this));
+            else if(randomize < 0.9) this.enemies.push(new Angular2(this));
             else this.enemies.push(new LuckyFish(this));
-            // (randomize < 0.5) ? this.enemies.push(new Angular1(this)) : this.enemies.push(new Angular2(this));
         }
         // collision check
         checkCollision(rect1, rect2){

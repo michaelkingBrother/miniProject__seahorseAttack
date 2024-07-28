@@ -94,8 +94,6 @@ window.addEventListener('load', function(){
             this.x = this.game.width;
             this.speedX = Math.random() * -1.5 -0.5;
             this.makedForDeletion = false;
-            this.lives = 5;
-            this.score = this.lives;
             this.frameX = 0;
             this.frameY=0;
             this.maxFrameX = 37;
@@ -125,6 +123,21 @@ window.addEventListener('load', function(){
             this.y = Math.random() * (this.game.height * 0.9 - this.height);
             this.image = document.getElementById('angler1');
             this.frameY = Math.floor(Math.random() * 3); // casuse sprite sheet have 3 row
+            this.lives = 2;
+            this.score = this.lives;
+        }
+    }
+    // second enemy - Night Angler enemy class
+    class Angular2 extends Enemy {
+        constructor(game) {
+            super(game);
+            this.width = 213;
+            this.height = 165;
+            this.y = Math.random() * (this.game.height * 0.9 - this.height);
+            this.image = document.getElementById('angler2');
+            this.frameY = Math.floor(Math.random() * 2); // casuse sprite sheet have 3 row
+            this.lives = 3;
+            this.score = this.lives;
         }
     }
     // handle logic for render layer on game
@@ -178,13 +191,12 @@ window.addEventListener('load', function(){
         }
         draw(context){
             context.save();
-            // setup
-            context.font = this.fontSize + 'px' + this.fontFamily;
-
-            context.shadowOffsetX = 2;
-            context.shadowOffsetY = 2;
-            context.shadowColor = 'black';
-            context.fillStyle= this.color;
+                // setup
+                context.font = this.fontSize + 'px' + this.fontFamily;
+                context.shadowOffsetX = 2;
+                context.shadowOffsetY = 2;
+                context.shadowColor = 'black';
+                context.fillStyle= this.color;
                 // draw core
                 context.fillText("Score: " + this.game.score, 20, 40);
                 // draw ammo
@@ -204,9 +216,10 @@ window.addEventListener('load', function(){
                         message1 = 'You Lose!';
                         message2 = 'Try Again!';
                     };
-                    this.fontSize = 50;
+                    context.textAlign = 'center';
+                    context.font = '50px Helvetica';
                     context.fillText(message1, this.game.width*0.5, this.game.height*0.5-40);
-                    this.fontSize = 25;
+                    context.font = '25px Helvetica';
                     context.fillText(message2, this.game.width*0.5, this.game.height*0.5+40);
                 }
             context.restore();
@@ -282,6 +295,7 @@ window.addEventListener('load', function(){
 
         }
         draw(context){
+            context.font = '20px Helvetica';
             this.background.draw(context);
             this.player.draw(context);
             this.ui.draw(context);
@@ -290,7 +304,8 @@ window.addEventListener('load', function(){
         }
         // push enemy to enemies []
         addEnemy(){
-            this.enemies.push(new Angular1(this));
+            const randomize = Math.random();
+            (randomize < 0.5) ? this.enemies.push(new Angular1(this)) : this.enemies.push(new Angular2(this));
         }
         // collision check
         checkCollision(rect1, rect2){

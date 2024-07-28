@@ -140,6 +140,20 @@ window.addEventListener('load', function(){
             this.score = this.lives;
         }
     }
+    // third enemy - Lucky Fish enemy class
+    class LuckyFish extends Enemy {
+        constructor(game) {
+            super(game);
+            this.width = 99;
+            this.height = 95;
+            this.y = Math.random() * (this.game.height * 0.9 - this.height);
+            this.image = document.getElementById('lucky');
+            this.frameY = Math.floor(Math.random() * 2); // casuse sprite sheet have 3 row
+            this.lives = 3;
+            this.score = 15;
+            this.type = 'lucky';
+        }
+    }
     // handle logic for render layer on game
     class Layer {
         constructor(game, image, speedModifier){
@@ -245,7 +259,7 @@ window.addEventListener('load', function(){
             this.score = 0;
             this.winningScore = 10;
             this.gameTime = 0;
-            this.timeLimit = 5000;
+            this.timeLimit = 15000;
             this.speed = 1;
             this.debug = false;
         }
@@ -305,7 +319,10 @@ window.addEventListener('load', function(){
         // push enemy to enemies []
         addEnemy(){
             const randomize = Math.random();
-            (randomize < 0.5) ? this.enemies.push(new Angular1(this)) : this.enemies.push(new Angular2(this));
+            if(randomize < 0.3) this.enemies.push(new Angular1(this));
+            else if(randomize < 0.6) this.enemies.push(new Angular2(this));
+            else this.enemies.push(new LuckyFish(this));
+            // (randomize < 0.5) ? this.enemies.push(new Angular1(this)) : this.enemies.push(new Angular2(this));
         }
         // collision check
         checkCollision(rect1, rect2){

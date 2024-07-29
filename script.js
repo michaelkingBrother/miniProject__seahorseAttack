@@ -72,6 +72,9 @@ window.addEventListener('load', function(){
             this.y += this.speedY;
             // hande player render
             (this.frameX < this.maxFrameX) ? this.frameX++ : this.frameX = 0;
+            //vertical boundaries
+            if(this.y > this.game.height - this.height * 0.5) this.y = this.game.height - this.height * 0.5 ; // bottom vertical is 1/2 player height
+            else if (this.y < -this.height * 0.5) this.y = -this.height * 0.5;
             // handle projectiles
             this.projectiles.forEach(projectile => projectile.update()) // call update() on each bullet
             this.projectiles = this.projectiles.filter(projectile => !projectile.makedForDeletion)
@@ -231,7 +234,6 @@ window.addEventListener('load', function(){
             context.save();
                 // setup
                 context.fillStyle= this.color;
-                console.log(context.font);
                 context.shadowOffsetX = 2;
                 context.shadowOffsetY = 2;
                 context.shadowColor = 'black';
@@ -252,10 +254,12 @@ window.addEventListener('load', function(){
                         message2 = 'Get My repair kit and Try Again!';
                     };
                     context.textAlign = 'center';
-                    context.font = '70px Bangers';
+                    context.font = '70px ' + this.fontFamily;
                     context.fillText(message1, this.game.width*0.5, this.game.height*0.5-20);
-                    context.font = '25px Bangers';
+                    context.font = '25px '+this.fontFamily;
                     context.fillText(message2, this.game.width*0.5, this.game.height*0.5+20);
+                    context.font = '15px '+this.fontFamily;
+                    context.fillText('t r u n g  h o', this.game.width*0.6, this.game.height*0.5+45);
                 };
                 // draw ammo
                 if(this.game.player.powerUp) context.fillStyle = "yellow" ;

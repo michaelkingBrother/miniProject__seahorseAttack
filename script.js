@@ -32,16 +32,14 @@ window.addEventListener('load', function(){
             this.height = 3;
             this.speed = 3;
             this.makedForDeletion = false;
+            this.image = document.getElementById('projectile');
         }
         update(){
             this.x += this.speed; //add speed for bullet
             if (this.x > this.game.width ) this.makedForDeletion = true // set a flag to remove bullet if over 80% screen
         }
         draw(context){
-            context.fillStyle = 'yellow';
-            if(!this.makedForDeletion){
-                context.fillRect(this.x, this.y, this.width, this.height); // draw bullet
-            }
+            context.drawImage(this.image, this.x, this.y); // draw bullet
         }
     }
     class Particle {}

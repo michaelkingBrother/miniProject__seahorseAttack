@@ -133,7 +133,7 @@ window.addEventListener('load', function(){
             if(this.game.debug) {
                 context.strokeRect(this.x, this.y, this.width, this.height);
                 context.fillStyle = 'black';
-                context.font = '20px Helvetica';
+                // context.font = '20px Helvetica';
                 context.fillText(this.lives, this.x, this.y);
             };
             context.drawImage(this.image, this.frameX * this.width, this.frameY * this.height, this.width, this.height, this.x, this.y, this.width, this.height)
@@ -224,17 +224,18 @@ window.addEventListener('load', function(){
         constructor(game){
             this.game = game;
             this.fontSize = 25;
-            this.fontFamily = 'Helveticle';
+            this.fontFamily = 'Bangers';
             this.color = 'white';
         }
         draw(context){
             context.save();
                 // setup
-                context.font = this.fontSize + 'px' + this.fontFamily;
+                context.fillStyle= this.color;
+                console.log(context.font);
                 context.shadowOffsetX = 2;
                 context.shadowOffsetY = 2;
                 context.shadowColor = 'black';
-                context.fillStyle= this.color;
+                context.font = this.fontSize + 'px ' + this.fontFamily;
                 // draw core
                 context.fillText("Score: " + this.game.score, 20, 40);
                 // game timer
@@ -244,17 +245,17 @@ window.addEventListener('load', function(){
                     let message1;
                     let message2;
                     if(this.game.score > this.game.winningScore){
-                        message1 = 'You Win!';
-                        message2 = 'Well Done!';
+                        message1 = 'Most Wonderous!';
+                        message2 = 'Well Done Explorer!';
                     } else{
-                        message1 = 'You Lose!';
-                        message2 = 'Try Again!';
+                        message1 = 'Blazes!';
+                        message2 = 'Get My repair kit and Try Again!';
                     };
                     context.textAlign = 'center';
-                    context.font = '50px Helvetica';
-                    context.fillText(message1, this.game.width*0.5, this.game.height*0.5-40);
-                    context.font = '25px Helvetica';
-                    context.fillText(message2, this.game.width*0.5, this.game.height*0.5+40);
+                    context.font = '70px Bangers';
+                    context.fillText(message1, this.game.width*0.5, this.game.height*0.5-20);
+                    context.font = '25px Bangers';
+                    context.fillText(message2, this.game.width*0.5, this.game.height*0.5+20);
                 };
                 // draw ammo
                 if(this.game.player.powerUp) context.fillStyle = "yellow" ;
@@ -337,12 +338,11 @@ window.addEventListener('load', function(){
 
         }
         draw(context){
-            context.font = '20px Helvetica';
             this.background.draw(context);
+            this.ui.draw(context);
             this.player.draw(context);
             this.enemies.forEach(enemy => enemy.draw(context)); // draw each enemy
             this.background.layer4.draw(context); // draw layer 4 outermost
-            this.ui.draw(context);
         }
         // push enemy to enemies []
         addEnemy(){

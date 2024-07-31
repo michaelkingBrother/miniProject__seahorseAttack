@@ -36,13 +36,53 @@ window.addEventListener('load', function(){
         }
         update(){
             this.x += this.speed; //add speed for bullet
-            if (this.x > this.game.width ) this.makedForDeletion = true // set a flag to remove bullet if over 80% screen
+            if (this.x > this.game.width ) this.makedForDeletion = true // set a flag to remove bullet if over screen
         }
         draw(context){
             context.drawImage(this.image, this.x, this.y); // draw bullet
         }
     }
-    class Particle {}
+    class Particle {
+        constructor(game, x, y){
+            this.game = game;
+            this.x = x;
+            this.y = y;
+            this.image = document.getElementById('gears');
+            this.frameX = Math.floor(Math.random() * 3); // case sprite is 9 x 9
+            this.frameY = Math.floor(Math.random() * 3);
+            // resize gears random
+            this.spriteSize = 50; // default site of gears
+            this.sizeModifile = Math.random()*0.5 + 0.5;
+            this.size = this.spriteSize * this.sizeModifile // resize gears
+            // gravity fall effect
+            this.speedX = Math.random() * 6 - 3; // gears fall to left or right enemy obj
+            this.speedY = Math.random() * -15 ; // gear fly up
+            this.gravity = 0.5; // ctrol fall effect;
+            // flag for delete gears
+            this.makedForDeletion = false;
+            // for gears turn
+            this.radian = 0;
+            this.radianVal = Math.random() * 0.2 - 0.1; // random radian each frame
+            // bounce effect
+            this.bounced = 0; // bounce control state
+            this.bottomBounceBoundary = Math.random() * 100 - 20 // vitrual bounce boundary
+        }
+        update(){
+            this.speedY += this.gravity; // gravity fall effect
+            this.x -= this.speedX;
+            this.y += this.speedY;
+            this.radian += this.radianVal; // randome radian effect
+            // bounce if collision with vitrual bottom
+            if(this.y > this.game.height - this.bottomBounceBoundary && this.bounced < 2) {
+                this.bounced++;
+                this.speedY *= -0.5;
+            }
+            if(this.y > this.game.height || this.x < 0 - this.size) this.makedForDeletion = true
+        }
+        draw(context){
+            context.drawImage(this.image, this.spriteSize * this.frameX, this.spriteSize * this.frameY, this.spriteSize, this.spriteSize, this.x, this.y, this.size, this.size);
+        }
+    }
     class Player {
         constructor(game){
             this.game = game;
@@ -279,6 +319,7 @@ window.addEventListener('load', function(){
             this.ui = new UI(this);
             this.keys = [];
             this.enemies = [];
+            this.particles = [];
             this.enemyTimer = 0;
             this.enemyInterval = 1000; // time to call enemy 1s
             this.ammo = 20;
@@ -307,6 +348,9 @@ window.addEventListener('load', function(){
             } else {
                 this.ammoTimer += deltaTime;
             };
+            // update particle
+            this.particles.forEach(particle => particle.update());
+            this.particles = this.particles.filter(particle => !particle.makedForDeletion);
             // update enemy with deltaTime
             if(this.enemyTimer > this.enemyInterval && !this.gameOver) {
                 this.addEnemy();
@@ -317,19 +361,31 @@ window.addEventListener('load', function(){
             this.enemies.forEach(
                 enemy => {
                     enemy.update();
-                    // checke collision of player and enemy
+                    // check collision of player and enemy
                     if(this.checkCollision(this.player, enemy)){
                         enemy.makedForDeletion = true;
+                        // particle fall effect
+                        for (let i = 0; i < 10; i++) {
+                            this.particles.push( new Particle(this, enemy.x + enemy.width * 0.5, enemy.y + enemy.height * 0.5));
+                        }
                         // check type of enemy
                         enemy.type == 'lucky' ? this.player.enterPowerUp() : this.score -= enemy.score;
                     };
+                    // check collision of projectile and enemy
                     this.player.projectiles.forEach(
                         projectile => {
                             if(this.checkCollision(projectile, enemy)){
                                 projectile.makedForDeletion = true;
                                 enemy.lives--;
+                                // particle fall effect
+                                this.particles.push( new Particle(this, enemy.x + enemy.width * 0.5, enemy.y + enemy.height * 0.5));
                                 if(enemy.lives <= 0){
                                     enemy.makedForDeletion = true;
+                                    // particle fall effect
+                                    for (let i = 0; i < 10; i++) {
+                                        this.particles.push( new Particle(this, enemy.x + enemy.width * 0.5, enemy.y + enemy.height * 0.5));
+                                    }
+                                    // game score
                                     if(!this.gameOver) this.score += enemy.score;
                                     if(this.score > this.winningScore) this.gameOver = true;
                                 }
@@ -346,6 +402,7 @@ window.addEventListener('load', function(){
             this.ui.draw(context);
             this.player.draw(context);
             this.enemies.forEach(enemy => enemy.draw(context)); // draw each enemy
+            this.particles.forEach(particle => particle.draw(context)); // draw each particle
             this.background.layer4.draw(context); // draw layer 4 outermost
         }
         // push enemy to enemies []

@@ -65,22 +65,26 @@ window.addEventListener('load', function(){
             this.radianVal = Math.random() * 0.2 - 0.1; // random radian each frame
             // bounce effect
             this.bounced = 0; // bounce control state
-            this.bottomBounceBoundary = Math.random() * 100 - 20 // vitrual bounce boundary
+            this.bottomBounceBoundary = Math.random() * 100 - 60 // vitrual bounce boundary
         }
         update(){
             this.speedY += this.gravity; // gravity fall effect
-            this.x -= this.speedX;
+            this.x -= this.speedX + this.game.speed;
             this.y += this.speedY;
             this.radian += this.radianVal; // randome radian effect
             // bounce if collision with vitrual bottom
             if(this.y > this.game.height - this.bottomBounceBoundary && this.bounced < 2) {
                 this.bounced++;
-                this.speedY *= -0.5;
+                this.speedY *= -0.7;
             }
             if(this.y > this.game.height || this.x < 0 - this.size) this.makedForDeletion = true
         }
         draw(context){
-            context.drawImage(this.image, this.spriteSize * this.frameX, this.spriteSize * this.frameY, this.spriteSize, this.spriteSize, this.x, this.y, this.size, this.size);
+            context.save();
+                context.translate(this.x, this.y);
+                context.rotate(this.radian);
+                context.drawImage(this.image, this.spriteSize * this.frameX, this.spriteSize * this.frameY, this.spriteSize, this.spriteSize, this.size * 0.5, this.size * -0.5, this.size, this.size);
+            context.restore();
         }
     }
     class Player {

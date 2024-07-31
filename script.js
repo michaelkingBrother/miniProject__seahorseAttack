@@ -65,7 +65,7 @@ window.addEventListener('load', function(){
             this.radianVal = Math.random() * 0.2 - 0.1; // random radian each frame
             // bounce effect
             this.bounced = 0; // bounce control state
-            this.bottomBounceBoundary = Math.random() * 100 - 60 // vitrual bounce boundary
+            this.bottomBounceBoundary = Math.random() * 80 - 60 // vitrual bounce boundary
         }
         update(){
             this.speedY += this.gravity; // gravity fall effect
@@ -156,7 +156,7 @@ window.addEventListener('load', function(){
         enterPowerUp(){
             this.powerUpTimer= 0; // reset timer if collision second enemy
             this.powerUp = true;
-            this.game.ammo = this.game.maxAmmo // reset full ammo;
+            if(this.game.ammo < this.game.maxAmmo) this.game.ammo = this.game.maxAmmo // reset full ammo;
         }
     }
     class Enemy {
@@ -332,7 +332,7 @@ window.addEventListener('load', function(){
             this.ammoInterval = 500;
             this.gameOver = false;
             this.score = 0;
-            this.winningScore = 10;
+            this.winningScore = 100;
             this.gameTime = 0;
             this.timeLimit = 15000;
             this.speed = 1;
@@ -373,7 +373,7 @@ window.addEventListener('load', function(){
                             this.particles.push( new Particle(this, enemy.x + enemy.width * 0.5, enemy.y + enemy.height * 0.5));
                         }
                         // check type of enemy
-                        enemy.type == 'lucky' ? this.player.enterPowerUp() : this.score -= enemy.score;
+                        enemy.type === 'lucky' ? this.player.enterPowerUp() : this.score -= enemy.score;
                     };
                     // check collision of projectile and enemy
                     this.player.projectiles.forEach(

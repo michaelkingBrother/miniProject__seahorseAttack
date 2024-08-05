@@ -3,7 +3,7 @@ window.addEventListener('load', function(){
     const canvas = document.getElementById('canvas1');
     const ctx = canvas.getContext('2d'); //or webgl for 3d
 
-    canvas.width = 700;
+    canvas.width = window.innerWidth;
     canvas.height = 500;
 
     class InputHandler {
@@ -85,6 +85,47 @@ window.addEventListener('load', function(){
                 context.rotate(this.radian);
                 context.drawImage(this.image, this.spriteSize * this.frameX, this.spriteSize * this.frameY, this.spriteSize, this.spriteSize, this.size * -0.5, this.size * -0.5, this.size, this.size);
             context.restore();
+        }
+    }
+    class Explosion {
+        constructor(game, x, y){
+            this.game = game;
+            this.x = x;
+            this.y = y;
+            this.frameX = 0;
+            this.maxFrameX = 8;
+            this.spriteHeight = 200;
+            this.spriteWidth = 200;
+            this.width = this.spriteWidth;
+            this.height = this.spriteHeight;
+            this.x = x - this.width * 0.5;
+            this.y = y - this.height * 0.5;
+            // setup render 25 fps per s
+            this.fps = 25;
+            this.timer = 0;
+            this.interval = 1000 / this.fps;
+            this.makedForDeletion = false;
+        }
+        update(deltaTime){
+            this.x -= this.game.speed; // for animation effect follow game scroll
+            // update smoke explosion as 15 frame per second
+            (this.timer > this.interval) ? (this.frameX++ , this.timer = 0) : this.timer += deltaTime;
+            if (this.frameX > this.maxFrameX) this.makedForDeletion = true; // clear explosions []
+        }
+        draw(context){
+            context.drawImage(this.image, this.spriteWidth * this.frameX, 0, this.width, this.height, this.x , this.y, this.width, this.height)
+        }
+    }
+    class SmokeExplosion extends Explosion{
+        constructor(game, x, y){
+            super(game, x, y);
+            this.image = document.getElementById('smokeExplosion');
+        }
+    }
+    class FireExplosion extends Explosion{
+        constructor(game, x, y){
+            super(game, x, y);
+            this.image = document.getElementById('fireExplosion');
         }
     }
     class Player {
@@ -355,7 +396,7 @@ window.addEventListener('load', function(){
             this.keys = [];
             this.enemies = [];
             this.particles = [];
-            this.drones = [];
+            this.explosions = [];
             this.enemyTimer = 0;
             this.enemyInterval = 1000; // time to call enemy 1s
             this.ammo = 20;
@@ -364,9 +405,9 @@ window.addEventListener('load', function(){
             this.ammoInterval = 500;
             this.gameOver = false;
             this.score = 0;
-            this.winningScore = 1000;
+            this.winningScore = 100;
             this.gameTime = 0;
-            this.timeLimit = 15000;
+            this.timeLimit = 150000;
             this.speed = 1;
             this.debug = false;
         }
@@ -387,6 +428,9 @@ window.addEventListener('load', function(){
             // update particle
             this.particles.forEach(particle => particle.update());
             this.particles = this.particles.filter(particle => !particle.makedForDeletion);
+            // update explosion
+            this.explosions.forEach(explosion => explosion.update(deltaTime));
+            this.explosions = this.explosions.filter(explosion => !explosion.makedForDeletion);
             // update enemy with deltaTime
             if(this.enemyTimer > this.enemyInterval && !this.gameOver) {
                 this.addEnemy();
@@ -400,12 +444,20 @@ window.addEventListener('load', function(){
                     // check collision of player and enemy
                     if(this.checkCollision(this.player, enemy)){
                         enemy.makedForDeletion = true;
+                        // explosion fall effect
+                        this.addExplosion(enemy);
                         // particle fall effect
                         for (let i = 0; i < enemy.score; i++) {
                             this.particles.push( new Particle(this, enemy.x + enemy.width * 0.5, enemy.y + enemy.height * 0.5));
                         }
                         // check type of enemy
-                        enemy.type === 'lucky' ? this.player.enterPowerUp() : this.score -= enemy.score;
+                        enemy.type === 'lucky'
+                         ? this.player.enterPowerUp()
+                         : (this.score -= enemy.score,
+                            // player rebound effect
+                             this.player.x -= enemy.score * 10,
+                             this.player.y += enemy.score * (Math.random() * 20 - 10)
+                            )
                     };
                     // check collision of projectile and enemy
                     this.player.projectiles.forEach(
@@ -415,8 +467,11 @@ window.addEventListener('load', function(){
                                 enemy.lives--;
                                 // particle fall effect
                                 this.particles.push( new Particle(this, enemy.x + enemy.width * 0.5, enemy.y + enemy.height * 0.5));
+                                // handle enemy die
                                 if(enemy.lives <= 0){
                                     enemy.makedForDeletion = true;
+                                    // explosion fall effect
+                                    this.addExplosion(enemy);
                                     // particle fall effect
                                     for (let i = 0; i < enemy.score; i++) {
                                         this.particles.push( new Particle(this, enemy.x + enemy.width * 0.5, enemy.y + enemy.height * 0.5));
@@ -424,7 +479,7 @@ window.addEventListener('load', function(){
                                     // call drone affter hivewhile die
                                     if(enemy.type === 'hive') {
                                         for (let i = 0; i < 5; i++) {
-                                            this.enemies.push(new Drone(this, enemy.x + Math.random() * enemy.width, enemy.y + Math.random() * enemy.height));
+                                            this.enemies.push(new Drone(this, enemy.x + Math.random() * enemy.width * 0.5 , enemy.y + Math.random() * enemy.height * 0.5));
                                         }
                                     };
                                     // game score
@@ -445,7 +500,14 @@ window.addEventListener('load', function(){
             this.player.draw(context);
             this.enemies.forEach(enemy => enemy.draw(context)); // draw each enemy
             this.particles.forEach(particle => particle.draw(context)); // draw each particle
+            this.explosions.forEach(explosion => explosion.draw(context)); // draw smoke explosion
             this.background.layer4.draw(context); // draw layer 4 outermost
+        }
+        addExplosion(enemy){
+            const randomize = Math.random();
+            (randomize < 0.5)
+             ? this.explosions.push( new SmokeExplosion(this, enemy.x + enemy.width * 0.5, enemy.y + enemy.y * 0.5))
+             : this.explosions.push( new FireExplosion(this, enemy.x + enemy.width * 0.5, enemy.y + enemy.y * 0.5));
         }
         // push enemy to enemies []
         addEnemy(){
@@ -487,8 +549,8 @@ window.addEventListener('load', function(){
         const deltaTime =  timeStamp - lastTime; // time bettwen each animation loop
         lastTime = timeStamp;
         ctx.clearRect(0, 0, canvas.width, canvas.height) // clear all canvas draw before render new player
+        game.draw(ctx); // draw element into canvas before update obj
         game.update(deltaTime);
-        game.draw(ctx); // draw player into canvas
         requestAnimationFrame(animate); // browser will loop fn animate before render new frame
     };
     animate(0); // with pass 0 to first time timeStamp
